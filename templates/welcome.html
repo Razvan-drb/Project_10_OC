@@ -2,35 +2,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Summary | GUDLFT Registration</title>
+    <title>{% if club and not show_points %}Summary{% else %}Clubs Points{% endif %} | GUDLFT Registration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        h2, h3 {
+            margin: 10px 0;
+        }
+
+        a {
+            color: #4CAF50;
+            text-decoration: none;
+            margin: 10px 0;
+            display: inline-block;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        ul li {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f8f8;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        hr {
+            border: 0;
+            height: 1px;
+            background: #ddd;
+            margin: 20px auto;
+            width: 80%;
+        }
+
+        .flashes {
+            list-style: none;
+            padding: 10px;
+            margin: 20px 0;
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #c62828;
+            border-radius: 4px;
+            width: fit-content;
+            max-width: 80%;
+        }
+
+        .flashes li {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .points-badge {
+            float: right;
+            background: #4CAF50;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.9em;
+        }
+
+        .points-display {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
 <body>
-        <h2>Welcome, {{club['email']}} </h2><a href="{{url_for('logout')}}">Logout</a>
+    {% if club and not show_points %}
+        <!-- Normal Welcome View -->
+        <h2>Welcome, {{club['email']}}</h2>
+        <a href="{{url_for('logout')}}">Logout</a>
+        <a href="{{ url_for('pointsDisplay', from=club['email']) }}">View All Clubs Points</a>
 
-    {% with messages = get_flashed_messages()%}
-    {% if messages %}
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class="flashes">
+            {% for message in messages %}
+                <li>{{message}}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+        {% endwith %}
+
+        <p>Points available: {{club['points']}}</p>
+
+        <h3>Competitions:</h3>
         <ul>
-       {% for message in messages %}
-            <li>{{message}}</li>
-        {% endfor %}
-       </ul>
-    {% endif%}
-    Points available: {{club['points']}}
-    <h3>Competitions:</h3>
-    <ul>
-        {% for comp in competitions%}
-        <li>
-            {{comp['name']}}<br />
-            Date: {{comp['date']}}</br>
-            Number of Places: {{comp['numberOfPlaces']}}
-            {%if comp['numberOfPlaces']|int >0%}
-            <a href="{{ url_for('book',competition=comp['name'],club=club['name']) }}">Book Places</a>
-            {%endif%}
-        </li>
-        <hr />
-        {% endfor %}
-    </ul>
-    {%endwith%}
+            {% for comp in competitions %}
+            <li>
+                {{comp['name']}}<br />
+                Date: {{comp['date']}}<br />
+                Number of Places: {{comp['numberOfPlaces']}}
+                {% if comp['numberOfPlaces']|int > 0 %}
+                <a href="{{ url_for('book', competition=comp['name'], club=club['name']) }}">Book Places</a>
+                {% endif %}
+            </li>
+            <hr />
+            {% endfor %}
+        </ul>
+    {% else %}
+        <!-- Points Display View -->
+        <h2>Clubs Points Summary</h2>
+        {% if request.args.get('from') %}
+            <a href="{{ url_for('showSummary') }}" onclick="event.preventDefault(); window.history.back();">Back to Welcome</a>
+        {% else %}
+            <a href="{{ url_for('index') }}">Back to Home</a>
+        {% endif %}
 
+        <div class="points-display">
+            <h3>Current Club Points:</h3>
+            <ul>
+                {% for c in clubs %}
+                <li>
+                    <strong>{{ c['name'] }}</strong>
+                    <span class="points-badge">{{ c['points'] }} points</span>
+                </li>
+                <hr />
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
 </body>
 </html>
