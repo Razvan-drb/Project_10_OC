@@ -94,31 +94,35 @@
 <body>
     {% if club and not show_points %}
         <!-- Normal Welcome View -->
-        <h2>Welcome, {{club['email']}}</h2>
-        <a href="{{url_for('logout')}}">Logout</a>
+        <h2>Welcome, {{ club['email'] }}</h2>
+        <a href="{{ url_for('logout') }}">Logout</a>
         <a href="{{ url_for('pointsDisplay', from=club['email']) }}">View All Clubs Points</a>
 
         {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <ul class="flashes">
-            {% for message in messages %}
-                <li>{{message}}</li>
-            {% endfor %}
-            </ul>
-        {% endif %}
+            {% if messages %}
+                <ul class="flashes">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
         {% endwith %}
 
-        <p>Points available: {{club['points']}}</p>
+        <p>Points available: {{ club['points'] }}</p>
 
         <h3>Competitions:</h3>
         <ul>
             {% for comp in competitions %}
             <li>
-                {{comp['name']}}<br />
-                Date: {{comp['date']}}<br />
-                Number of Places: {{comp['numberOfPlaces']}}
-                {% if comp['numberOfPlaces']|int > 0 %}
-                <a href="{{ url_for('book', competition=comp['name'], club=club['name']) }}">Book Places</a>
+                {{ comp['name'] }}<br />
+                Date: {{ comp['date'] }}<br />
+                Number of Places: {{ comp['numberOfPlaces'] }}
+
+                {% set comp_date = comp['date'] | todatetime('%Y-%m-%d %H:%M:%S') %}
+                {% if comp_date > now() and comp['numberOfPlaces']|int > 0 %}
+                    <a href="{{ url_for('book', competition=comp['name'], club=club['name']) }}">Book Places</a>
+                {% else %}
+                    <span style="color: grey;">Booking Closed</span>
                 {% endif %}
             </li>
             <hr />
@@ -147,4 +151,5 @@
         </div>
     {% endif %}
 </body>
+
 </html>

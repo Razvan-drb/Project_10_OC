@@ -1,4 +1,6 @@
 import json
+from datetime import datetime
+
 from flask import Flask,render_template,request,redirect,flash,url_for
 import os
 
@@ -31,9 +33,25 @@ def get_club_by_name(name):
 def get_competition_by_name(name):
     return next((comp for comp in competitions if comp['name'] == name), None)
 
+def is_future_competition(comp):
+    comp_date = datetime.strptime(comp['date'], "%Y-%m-%d %H:%M:%S")
+    return comp_date >= datetime.now()
+
+
+def todatetime(value, fmt="%Y-%m-%d %H:%M:%S"):
+    """Convert string to datetime object in Jinja templates."""
+    return datetime.strptime(value, fmt)
+
+def now():
+    """Return current datetime for Jinja templates."""
+    return datetime.now()
+
 
 app = Flask(__name__)
 app.secret_key = 'something_special'
+
+app.jinja_env.filters['todatetime'] = todatetime
+app.jinja_env.globals['now'] = now
 
 competitions = loadCompetitions()
 clubs = loadClubs()
@@ -55,18 +73,27 @@ def showSummary():
         flash("Error: Email not found. Please try again.")
         return redirect(url_for('index'))
 
-    return render_template('welcome.html', club=club, competitions=competitions)
+
+    future_comps = [c for c in competitions if is_future_competition(c)]
+
+    return render_template('welcome.html', club=club, competitions=future_comps)
 
 
 @app.route('/book/<competition>/<club>')
-def book(competition,club):
-    foundClub = [c for c in clubs if c['name'] == club][0]
-    foundCompetition = [c for c in competitions if c['name'] == competition][0]
-    if foundClub and foundCompetition:
-        return render_template('booking.html',club=foundClub,competition=foundCompetition)
-    else:
-        flash("Something went wrong-please try again")
-        return render_template('welcome.html', club=club, competitions=competitions)
+def book(competition, club):
+    comp = get_competition_by_name(competition)
+    club_data = get_club_by_name(club)
+
+    if not comp or not club_data:
+        flash("Error: Competition or club not found")
+        return redirect(url_for('index'))
+
+    if not is_future_competition(comp):
+        flash("Error: Cannot book places for past competitions")
+        return redirect(url_for('showSummary'))
+
+    return render_template('booking.html', club=club_data, competition=comp)
+
 
 
 @app.route('/purchasePlaces', methods=['POST'])
@@ -74,13 +101,22 @@ def purchasePlaces():
     competition = get_competition_by_name(request.form['competition'])
     club = get_club_by_name(request.form['club'])
     places_required = int(request.form['places'])
+    club_points = int(club['points'])
 
     if places_required <= 0:
         flash("Error: Must book at least 1 place")
         return render_template('welcome.html', club=club, competitions=competitions), 200
 
-    if places_required > int(club['points']):
-        flash(f"Error: Cannot book more than {club['points']} points")
+    if places_required > 12:
+        flash("Error: Cannot book more than 12 places")
+        return render_template('welcome.html', club=club, competitions=competitions), 200
+
+    if places_required > club_points:
+        flash(f"Error: Cannot book more than {club_points} points")
+        return render_template('welcome.html', club=club, competitions=competitions), 200
+
+    if places_required > int(competition['numberOfPlaces']):
+        flash(f"Error: Cannot book more than {competition['numberOfPlaces']} places available")
         return render_template('welcome.html', club=club, competitions=competitions), 200
 
     # Successful booking
@@ -90,6 +126,7 @@ def purchasePlaces():
     save_competitions()
     flash('Great-booking complete!')
     return render_template('welcome.html', club=club, competitions=competitions)
+
 
 
 # TODO: Add route for points display
