@@ -107,13 +107,14 @@ def purchasePlaces():
         flash("Error: Must book at least 1 place")
         return render_template('welcome.html', club=club, competitions=competitions), 200
 
+    if places_required > club_points:
+        flash(f"Error: Cannot book more than {club_points} points")
+        return render_template('welcome.html', club=club, competitions=competitions), 200
+
     if places_required > 12:
         flash("Error: Cannot book more than 12 places")
         return render_template('welcome.html', club=club, competitions=competitions), 200
 
-    if places_required > club_points:
-        flash(f"Error: Cannot book more than {club_points} points")
-        return render_template('welcome.html', club=club, competitions=competitions), 200
 
     if places_required > int(competition['numberOfPlaces']):
         flash(f"Error: Cannot book more than {competition['numberOfPlaces']} places available")
@@ -128,13 +129,11 @@ def purchasePlaces():
     return render_template('welcome.html', club=club, competitions=competitions)
 
 
-
-# TODO: Add route for points display
 @app.route('/points')
 def pointsDisplay():
     club_email = request.args.get('from')
     club = get_club_by_email(club_email) if club_email else None
-    return render_template('welcome.html',
+    return render_template('points.html',
                          club=club,
                          competitions=competitions if club else None,
                          clubs=clubs,
@@ -143,6 +142,7 @@ def pointsDisplay():
 @app.route('/logout')
 def logout():
     return redirect(url_for('index'))
+
 
 if __name__ == '__main__':
     app.run(debug=True)
