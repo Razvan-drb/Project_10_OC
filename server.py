@@ -46,6 +46,15 @@ def now():
     """Return current datetime for Jinja templates."""
     return datetime.now()
 
+def get_club_by_name(name):
+    return next((club for club in clubs if club['name'] == name), None)
+
+def get_competition_by_name(name):
+    return next((comp for comp in competitions if comp['name'] == name), None)
+
+def is_future_competition(comp):
+    comp_date = datetime.strptime(comp['date'], "%Y-%m-%d %H:%M:%S")
+    return comp_date >= datetime.now()
 
 app = Flask(__name__)
 app.secret_key = 'something_special'
