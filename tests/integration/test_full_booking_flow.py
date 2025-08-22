@@ -26,10 +26,12 @@ class TestBookingWorkflows(unittest.TestCase):
         self.mock_save = self.save_patcher.start()
 
     def tearDown(self):
+        # Clean up patches after each test
         self.clubs_patcher.stop()
         self.competitions_patcher.stop()
         self.save_patcher.stop()
 
+    # Test: Valid booking deducts points from the club
     def test_points_deduction_after_booking(self):
         """Integration test: Complete booking workflow with points deduction"""
         with patch('server.competitions', self.mock_competitions):
@@ -48,6 +50,7 @@ class TestBookingWorkflows(unittest.TestCase):
                     self.assertIn(b'Great-booking complete!', response.data)
                     self.assertIn(b"Points available: 10", response.data)
 
+    # Test: Club cannot book more places than allowed (overbooking prevention)
     def test_overbooking_prevention(self):
         """Integration test: Error handling for overbooking"""
         with patch('server.competitions', self.mock_competitions):

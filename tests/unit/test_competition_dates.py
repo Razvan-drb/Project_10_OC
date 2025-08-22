@@ -3,6 +3,12 @@ from unittest.mock import patch
 from datetime import datetime, timedelta
 from server import app
 
+"""
+UNIT TESTS: Date validation
+Evaluation: Tests is_future_competition() function
+Future/past competition validation
+"""
+
 class TestCompetitionDates(unittest.TestCase):
     def setUp(self):
         self.client = app.test_client()
@@ -28,6 +34,7 @@ class TestCompetitionDates(unittest.TestCase):
         self.clubs_patcher.stop()
         self.competitions_patcher.stop()
 
+    # Future competition accessible for booking
     def test_book_with_future_competition(self):
         """Unit test: Booking with future competition date should work"""
         future_comp = self.mock_competitions[1]  # Fall Classic 2025
@@ -38,6 +45,7 @@ class TestCompetitionDates(unittest.TestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertIn(future_comp["name"].encode(), response.data)
 
+    # Past competition -> redirect (not bookable)
     def test_book_with_past_competition(self):
         """Unit test: Booking with past competition date should redirect"""
         # Add a past competition to mock data for this test
@@ -51,9 +59,10 @@ class TestCompetitionDates(unittest.TestCase):
                     self.assertEqual(response.status_code, 302)
                     self.assertIn("/showSummary", response.headers["Location"])
         finally:
-            # Clean up
+            # Clean up so it doesn’t affect other tests
             self.mock_competitions.remove(past_comp)
 
+    # competition happening today/ booking works
     def test_competition_today(self):
         """Unit test: Booking with competition happening today should work"""
         future_time = (datetime.now() + timedelta(seconds=10)).strftime("%Y-%m-%d %H:%M:%S")

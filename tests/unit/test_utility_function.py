@@ -10,7 +10,7 @@ class TestUtilityFunctions(unittest.TestCase):
         self.original_competitions = competitions[:]
 
     def tearDown(self):
-        # Restore original data (though tests use mocks)
+        # placeholder to Restore original data
         pass
 
     def test_save_clubs_function(self):
@@ -21,7 +21,9 @@ class TestUtilityFunctions(unittest.TestCase):
 
                 # Verify file operations
                 mock_file.assert_called_once_with('clubs.json', 'w')
+                # Verify that json.dump() was called to write data
                 mock_dump.assert_called_once()
+
 
     def test_save_competitions_function(self):
         """Unit test: save_competitions file operation"""

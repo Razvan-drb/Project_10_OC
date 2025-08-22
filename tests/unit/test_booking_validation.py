@@ -71,6 +71,7 @@ class TestBookingValidation(unittest.TestCase):
                     self.assertEqual(int(club['points']), 13)
                     self.assertEqual(int(competition['numberOfPlaces']), 10)
 
+    # Test: Booking fewer than 12 places succeed and deduct points
     def test_booking_less_than_12_places_succeeds(self):
         """Integration test: Successful booking with points deduction"""
         club_name = self.mock_clubs[0]['name']  # "Simply Lift"
@@ -95,6 +96,7 @@ class TestBookingValidation(unittest.TestCase):
                     updated_club = self.get_updated_club(club_name)
                     self.assertEqual(int(updated_club['points']), 8)  # 13 - 5 = 8
 
+    # Test: exactly 12 places succeed
     def test_booking_12_places_succeeds(self):
         """Integration test: Edge case - exactly 12 places booking"""
         club_name = self.mock_clubs[0]['name']  # Simply Lift, 13 points

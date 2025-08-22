@@ -69,6 +69,9 @@ def showSummary():
         return redirect(url_for('index'))
 
     club = get_club_by_email(email)
+
+    # do not crash when unknown email entered
+    # Test: test_unknown_email_shows_error()
     if not club:
         flash("Error: Email not found. Please try again.")
         return redirect(url_for('index'))
@@ -88,6 +91,8 @@ def book(competition, club):
         flash("Error: Competition or club not found")
         return redirect(url_for('index'))
 
+    # can not book past competitions
+    # Test: test_book_with_past_competition()
     if not is_future_competition(comp):
         flash("Error: Cannot book places for past competitions")
         return redirect(url_for('showSummary'))
@@ -107,10 +112,14 @@ def purchasePlaces():
         flash("Error: Must book at least 1 place")
         return render_template('welcome.html', club=club, competitions=competitions), 200
 
+    # can not over spend club points
+    # Test: test_overbooking_prevention()
     if places_required > club_points:
         flash(f"Error: Cannot book more than {club_points} points")
         return render_template('welcome.html', club=club, competitions=competitions), 200
 
+    #  12 place booking limit
+    # Test: test_booking_more_than_12_places_fails()
     if places_required > 12:
         flash("Error: Cannot book more than 12 places")
         return render_template('welcome.html', club=club, competitions=competitions), 200
@@ -122,6 +131,9 @@ def purchasePlaces():
 
     # Successful booking
     competition['numberOfPlaces'] = int(competition['numberOfPlaces']) - places_required
+
+    # deduct points when places are booked
+    # Test: test_points_deduction_after_booking()
     club['points'] = int(club['points']) - places_required
     save_clubs()
     save_competitions()
@@ -129,6 +141,8 @@ def purchasePlaces():
     return render_template('welcome.html', club=club, competitions=competitions)
 
 
+# Public points board without authentication required
+# Test: test_points_display()
 @app.route('/points')
 def pointsDisplay():
     club_email = request.args.get('from')
