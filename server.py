@@ -1,4 +1,6 @@
 import json
+from datetime import datetime
+
 from flask import Flask,render_template,request,redirect,flash,url_for
 
 
@@ -13,6 +15,16 @@ def loadCompetitions():
          listOfCompetitions = json.load(comps)['competitions']
          return listOfCompetitions
 
+def is_future_competition(comp):
+    comp_date = datetime.strptime(comp['date'], "%Y-%m-%d %H:%M:%S")
+    return comp_date >= datetime.now()
+
+
+#  trouver des clubs et des competitions. reduire le nombre try / except dans le code.
+def get_club_by_email(email):
+    return next((club for club in clubs if club['email'] == email), None)
+
+
 
 app = Flask(__name__)
 app.secret_key = 'something_special'
@@ -24,10 +36,25 @@ clubs = loadClubs()
 def index():
     return render_template('index.html')
 
-@app.route('/showSummary',methods=['POST'])
+@app.route('/showSummary', methods=['POST'])
 def showSummary():
-    club = [club for club in clubs if club['email'] == request.form['email']][0]
-    return render_template('welcome.html',club=club,competitions=competitions)
+    email = request.form.get('email', '').strip()
+    if not email:
+        flash("Please enter an email address")
+        return redirect(url_for('index'))
+
+    club = get_club_by_email(email)
+
+    # do not crash when unknown email entered
+    # Test: test_unknown_email_shows_error()
+    if not club:
+        flash("Error: Email not found. Please try again.")
+        return redirect(url_for('index'))
+
+
+    future_comps = [c for c in competitions if is_future_competition(c)]
+
+    return render_template('welcome.html', club=club, competitions=future_comps)
 
 
 @app.route('/book/<competition>/<club>')
@@ -57,3 +84,6 @@ def purchasePlaces():
 @app.route('/logout')
 def logout():
     return redirect(url_for('index'))
+
+if __name__ == '__main__':
+    app.run(debug=True)
