@@ -13,6 +13,10 @@ def loadCompetitions():
          listOfCompetitions = json.load(comps)['competitions']
          return listOfCompetitions
 
+#  trouver des clubs et des competitions. reduire le nombre try / except dans le code.
+def get_club_by_email(email):
+    return next((club for club in clubs if club['email'] == email), None)
+
 
 app = Flask(__name__)
 app.secret_key = 'something_special'
@@ -51,7 +55,17 @@ def purchasePlaces():
     return render_template('welcome.html', club=club, competitions=competitions)
 
 
-# TODO: Add route for points display
+# Public points board without authentication required
+# Test: test_points_display()
+@app.route('/points')
+def pointsDisplay():
+    club_email = request.args.get('from')
+    club = get_club_by_email(club_email) if club_email else None
+    return render_template('points.html',
+                         club=club,
+                         competitions=competitions if club else None,
+                         clubs=clubs,
+                         show_points=True)
 
 
 @app.route('/logout')
